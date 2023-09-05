@@ -19,7 +19,7 @@ import java.awt.*;
 @Layer1SimpleAttachable
 @Layer1StrategyName("onBar")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION2)
-public class OnBar implements CustomModule, BarDataListener {
+public class OnBarSMA implements CustomModule, BarDataListener {
 
     private Indicator closeIndicator;
     private Indicator smaIndicator;
