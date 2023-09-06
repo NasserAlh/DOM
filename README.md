@@ -84,3 +84,85 @@ if(idea.project) {
     - Press the `Change high DPI settings` button. In the opened window, check the `Override high DPI scaling behavior. Scaling performed by:` checkbox.
     - In the dropdown below select `System` or `System (Enhanced)`
 - Start `velox.ib.Main`
+
+## Place Orders Ordeals
+
+### The Problem
+The stop loss and take profit limit orders are hugging after the associated market order has been executed. So, I need
+a way to make the code logic forcefully cancel any stop loss and take profit limit orders after their market order is
+executed.
+
+### Possible Solution
+
+- Step 1: Modify the `placeOrder` Method to Store Order IDs
+  - Modify the `placeOrder` method to store the order IDs of the stop loss and take profit orders in member variables:
+  
+        private String stopLossOrderId;
+        private String takeProfitOrderId;
+
+        private void placeOrder(boolean isBuy, double price, int quantity) {
+          try {
+          SimpleOrderSendParametersBuilder builder = new SimpleOrderSendParametersBuilder(alias, isBuy, quantity);
+          builder.setDuration(OrderDuration.IOC);
+  
+            // Setting a stop loss and take profit offset (in ticks)
+            int stopLossOffset = 10; // for example, 10 ticks
+            int takeProfitOffset = 20; // for example, 20 ticks
+            
+            builder.setStopLossOffset(stopLossOffset);
+            builder.setTakeProfitOffset(takeProfitOffset);
+            
+            SimpleOrderSendParameters order = builder.build();
+            OrderSendResult result = api.sendOrder(order);
+            
+            // Store the order IDs of the stop loss and take profit orders
+            stopLossOrderId = result.getStopLossOrderId();
+            takeProfitOrderId = result.getTakeProfitOrderId();
+          } catch (Exception e) {
+            Log.error("Error placing order", e);
+          } 
+        }
+
+- Step 2: Add a Method to Cancel Stop Loss and Take Profit Orders
+  - Add a method to cancel the stop loss and take profit orders using the stored order IDs:
+
+        private void cancelStopLossAndTakeProfitOrders() {
+          try {
+            if (stopLossOrderId != null) {
+            api.cancelOrder(stopLossOrderId);
+            stopLossOrderId = null;
+          }
+            if (takeProfitOrderId != null) {
+              api.cancelOrder(takeProfitOrderId);
+              takeProfitOrderId = null;
+            }
+          } catch (Exception e) {
+            Log.error("Error cancelling orders", e);
+          }
+        }
+  
+- Step 3: Modify the onBar Method to Cancel Orders
+  - Modify the onBar method to call the `cancelStopLossAndTakeProfitOrders` method before placing a new order:
+        
+        if (closePrice > smaValue && previousClose <= previousSMA) {
+          Log.info("Buy Signal at " + closePrice * pips);
+          if (currentPosition <= 0) {
+            cancelStopLossAndTakeProfitOrders(); // Cancel existing stop loss and take profit orders
+            placeOrder(true, closePrice, 1); // Place a buy order
+            currentPosition = 1; // Update the current position to long
+          }
+        } else if (closePrice < smaValue && previousClose >= previousSMA) {
+            Log.info("Sell Signal at " + closePrice * pips);
+            if (currentPosition >= 0) {
+                cancelStopLossAndTakeProfitOrders(); // Cancel existing stop loss and take profit orders
+                placeOrder(false, closePrice, 1); // Place a sell order
+                currentPosition = -1; // Update the current position to short
+            }
+        }
+
+However,the Api class does not have a cancelOrder method. The problem lays under the orderId, which must be retrieved 
+to track the order status. 
+
+There are classes that has methods to track orders in the strategy. For instance, I can use the `OrderInfoUpdate` class
+to track the status of orders and make decisions based on the current status of orders (whether they are filled,
+working, or cancelled). I can also use the `ExecutionInfo` class to track the execution details of orders. 
