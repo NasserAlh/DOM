@@ -160,9 +160,9 @@ executed.
             }
         }
 
-However,the Api class does not have a cancelOrder method. The problem lays under the orderId, which must be retrieved 
-to track the order status. 
+However, the Api class does not have a `cancelOrder` method. The problem lies under the orderId, which must be
+retrieved to track the order status.  Some classes have methods to track orders in the strategy.
 
-There are classes that has methods to track orders in the strategy. For instance, I can use the `OrderInfoUpdate` class
-to track the status of orders and make decisions based on the current status of orders (whether they are filled,
-working, or cancelled). I can also use the `ExecutionInfo` class to track the execution details of orders. 
+For instance, I can use the `OrderInfoUpdate` class to track the status of orders and make decisions based on the 
+current status of orders (whether they are filled, working, or canceled). I can also use the `ExecutionInfo` class to
+track the execution details of orders.
