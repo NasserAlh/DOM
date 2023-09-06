@@ -39,20 +39,20 @@ idea.module.downloadJavadoc = true
 if(idea.project) {
     // Create 'BookmapJar' run configuration for IntelliJ
     idea.project.settings.runConfigurations {
-        def addOpensOptions = '--add-opens=java.base/java.lang=ALL-UNNAMED\n' +
-                '--add-opens=java.base/java.io=ALL-UNNAMED\n' +
-                '--add-opens=java.base/java.math=ALL-UNNAMED\n' +
-                '--add-opens=java.base/java.util=ALL-UNNAMED\n' +
-                '--add-opens=java.base/java.util.concurrent=ALL-UNNAMED\n' +
-                '--add-opens=java.base/java.net=ALL-UNNAMED\n' +
-                '--add-opens=java.base/java.text=ALL-UNNAMED\n' +
-                '--add-opens=java.desktop/java.awt=ALL-UNNAMED\n' +
-                '--add-opens=java.desktop/java.awt.color=ALL-UNNAMED\n' +
-                '--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED\n' +
-                '--add-opens=java.desktop/com.sun.java.swing=ALL-UNNAMED\n' +
+        def addOpensOptions = '--add-opens=java.base/java.lang=ALL-UNNAMED ' +
+                '--add-opens=java.base/java.io=ALL-UNNAMED ' +
+                '--add-opens=java.base/java.math=ALL-UNNAMED ' +
+                '--add-opens=java.base/java.util=ALL-UNNAMED ' +
+                '--add-opens=java.base/java.util.concurrent=ALL-UNNAMED ' +
+                '--add-opens=java.base/java.net=ALL-UNNAMED ' +
+                '--add-opens=java.base/java.text=ALL-UNNAMED ' +
+                '--add-opens=java.desktop/java.awt=ALL-UNNAMED ' +
+                '--add-opens=java.desktop/java.awt.color=ALL-UNNAMED ' +
+                '--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED ' +
+                '--add-opens=java.desktop/com.sun.java.swing=ALL-UNNAMED ' +
                 '--add-opens=java.prefs/java.util.prefs=ALL-UNNAMED'
         if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-            addOpensOptions += '--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED\n'
+            addOpensOptions += ' --add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED'
         }
 
         'BookmapJar'(org.jetbrains.gradle.ext.JarApplication) {
@@ -63,4 +63,10 @@ if(idea.project) {
         }
     }
 }
+
+
+
+
+
+
 
