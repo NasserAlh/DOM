@@ -18,7 +18,7 @@ import velox.api.layer1.simplified.TradeDataListener;
 @Layer1SimpleAttachable
 @Layer1StrategyName("Last trade: live")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION2)
-public class LastTradeDemoNoHistory implements CustomModule, TradeDataListener
+public class ScreenSpacePainter implements CustomModule, TradeDataListener
 {
     protected Indicator lastTradeIndicator;
 
