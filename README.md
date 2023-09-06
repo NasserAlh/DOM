@@ -88,7 +88,7 @@ if(idea.project) {
 ## Place Orders Ordeals
 
 ### The Problem
-The stop loss and take profit limit orders are hugging after the associated market order has been executed. So, I need
+The stop loss and take profit limit orders are hanging after the associated market order has been executed. So, I need
 a way to make the code logic forcefully cancel any stop loss and take profit limit orders after their market order is
 executed.
 
