@@ -7,15 +7,15 @@ boolean fields that indicate what has changed since the last time the informatio
 **The class contains several boolean fields that indicate whether specific attributes of an order have changed. These
 fields include:**
 
-1. averageFillPriceChanged
-2. durationChanged
-3. filledChanged
-4. limitPriceChanged
-5. modificationTimeChanged
-6. statusChanged
-7. stopPriceChanged
-8. stopTriggeredChanged
-9. unfilledChanged
+* `averageFillPriceChanged`
+* `durationChanged`
+* `filledChanged`
+* `limitPriceChanged`
+* `modificationTimeChanged`
+* `statusChanged`
+* `stopPriceChanged`
+* `stopTriggeredChanged`
+* `unfilledChanged`
 
 ## Constructors
 **The class has several constructors, but most of them are deprecated, and it is recommended to use the Builder pattern
