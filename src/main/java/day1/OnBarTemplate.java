@@ -1,3 +1,5 @@
+package day1;
+
 import java.awt.Color;
 
 import velox.api.layer1.annotations.Layer1ApiVersion;

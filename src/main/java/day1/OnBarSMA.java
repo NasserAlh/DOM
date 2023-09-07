@@ -1,6 +1,11 @@
+package day1;
+
 import velox.api.layer1.annotations.*;
 import velox.api.layer1.common.Log;
-import velox.api.layer1.data.*;
+import velox.api.layer1.data.InstrumentInfo;
+import velox.api.layer1.data.OrderDuration;
+import velox.api.layer1.data.SimpleOrderSendParameters;
+import velox.api.layer1.data.SimpleOrderSendParametersBuilder;
 import velox.api.layer1.layers.utils.OrderBook;
 import velox.api.layer1.messages.indicators.Layer1ApiUserMessageModifyIndicator.GraphType;
 import velox.api.layer1.simplified.*;
@@ -89,19 +94,6 @@ public class OnBarSMA implements CustomModule, BarDataListener {
         } catch (Exception e) {
             Log.error("Error placing order", e);
         }
-    }
-
-    public void onOrderUpdated(OrderInfoUpdate orderInfo) {
-        // Handle order updates here
-        // For example, you might log the order's status
-        System.out.println("Order Status: " + orderInfo.status);
-
-    }
-
-    public void onOrderExecuted(ExecutionInfo executionInfo) {
-        // Handle order executions here
-        // For example, you might log the execution details
-        System.out.println("Order Executed: " + executionInfo.price);
     }
 
     @Override

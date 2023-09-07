@@ -1,3 +1,5 @@
+package day1;
+
 import velox.api.layer1.annotations.Layer1ApiVersion;
 import velox.api.layer1.annotations.Layer1ApiVersionValue;
 import velox.api.layer1.annotations.Layer1SimpleAttachable;

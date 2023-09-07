@@ -1,3 +1,5 @@
+package day1;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.logging.Logger;
