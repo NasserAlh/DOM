@@ -8,27 +8,27 @@ several fields that store details about an order.**
 
 ## Fields
 **The class contains several fields that store information about an order, including:**
-* averageFillPrice: The average fill price of the order.
-* clientId: A string representing the client ID.
-* doNotIncrease: A boolean indicating whether the order should not increase.
-* duration: An OrderDuration object representing the duration of the order.
-* exchangeId: A string representing the exchange ID.
-* filled: An integer representing the number of filled orders.
-* instrumentAlias: A string representing the instrument alias.
-* isBuy: A boolean indicating whether the order is a buy order.
-* isDuplicate: A boolean indicating whether the order is a duplicate (in case of cross-trading).
-* isSimulated: A boolean indicating whether the order is simulated.
-* limitPrice: The limit price of the order.
-* modificationUtcTime: A long representing the modification time in UTC.
-* orderId: A string representing the order ID.
-* status: An OrderStatus object representing the status of the order.
-* stopPrice: The stop price of the order.
-* stopTriggered: A boolean indicating whether the stop has been triggered.
-* type: An OrderType object representing the type of the order.
-* unfilled: An integer representing the number of unfilled orders
+* `averageFillPrice`: The average fill price of the order.
+* `clientId`: A string representing the client ID.
+* `doNotIncrease`: A boolean indicating whether the order should not increase.
+* `duration`: An OrderDuration object representing the duration of the order.
+* `exchangeId`: A string representing the exchange ID.
+* `filled`: An integer representing the number of filled orders.
+* `instrumentAlias`: A string representing the instrument alias.
+* `isBuy`: A boolean indicating whether the order is a buy order.
+* `isDuplicate`: A boolean indicating whether the order is a duplicate (in case of cross-trading).
+* `isSimulated`: A boolean indicating whether the order is simulated.
+* `limitPrice`: The limit price of the order.
+* `modificationUtcTime`: A long representing the modification time in UTC.
+* `orderId`: A string representing the order ID.
+* `status`: An OrderStatus object representing the status of the order.
+* `stopPrice`: The stop price of the order.
+* `stopTriggered`: A boolean indicating whether the stop has been triggered.
+* `type`: An OrderType object representing the type of the order.
+* `unfilled`: An integer representing the number of unfilled orders
 
 ## Constructors
-**The class has several constructors, but they are deprecated, and it is recommended to use the Builder pattern instead.
+**The class has several constructors, but they are deprecated, and it is recommended to use the `Builder` pattern instead.
 The constructors are of the form:**
 ```
 public OrderInfo(String instrumentAlias,String orderId, boolean isBuy,OrderType type, String clientId, boolean 
@@ -38,9 +38,9 @@ public OrderInfo(String instrumentAlias,String orderId, boolean isBuy,OrderType 
 ```
 
 ## Using the Builder Pattern
-**To use the Builder pattern to create an OrderInfo object, you would first create a Builder class within the OrderInfo
-class. This Builder class would have setter methods for each field in the OrderInfo class, and a build method to create
-an OrderInfo object. Here is an example of how you might implement and use this Builder class:**
+**To use the `Builder` pattern to create an `OrderInfo` object, you would first create a Builder class within the `OrderInfo`
+class. This `Builder` class would have setter methods for each field in the OrderInfo class, and a build method to create
+an `OrderInfo` object. Here is an example of how you might implement and use this `Builder` class:**
 ```
     public class OrderInfo {
     // Fields here
