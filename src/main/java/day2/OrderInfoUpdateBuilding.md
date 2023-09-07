@@ -1,5 +1,4 @@
-# OrderInfoBuilder
-
+# OrderInfoUpdate
 ## Class Overview
 **The `OrderInfoUpdate` class extends the `OrderInfo` class and contains cumulative information about an order along with
 boolean fields that indicate what has changed since the last time the information was reported.**
@@ -21,9 +20,9 @@ fields include:**
 ## Constructors
 **The class has several constructors, but most of them are deprecated, and it is recommended to use the Builder pattern
 instead. One of the constructors is:**
-
+```
     public OrderInfoUpdate(OrderInfo orderInfo)
-
+```
 ## Methods
 **The class has a method toBuilder() which returns an OrderInfoBuilder object, allowing you to use the Builder pattern to
 create an `OrderInfoUpdate` object. It also has a `toString()` method to get a string representation of the object.**
@@ -55,7 +54,7 @@ to create an OrderInfoUpdate object. Here is an example:**
      
     OrderInfoUpdate orderInfoUpdate = new OrderInfoUpdate(orderInfo);
             
-    // Step 3: Use the toBuilder() method to get an OrderInfoBuilder object and modify the OrderInfoUpdate object
+    // Step 3: Use the toBuilder() method to get an `OrderInfoBuilder` object and modify the OrderInfoUpdate object
     
     OrderInfoBuilder orderInfoBuilder = orderInfoUpdate.toBuilder();
     orderInfoBuilder.setLimitPrice(101.00);
