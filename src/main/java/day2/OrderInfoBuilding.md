@@ -1,12 +1,12 @@
-## OrderInfo 
+# OrderInfo 
 **The `OrderInfo` class is a part of the `velox.api.layer1.data` package and serves as a base class to accumulate information
 about an order. Here is a summary and how to use it with the Builder pattern:**
 
-### Class Overview
+## Class Overview
 **The `OrderInfo` class contains cumulative information about an order and implements the `Serializable` interface. It has
 several fields that store details about an order.**
 
-### Fields
+## Fields
 **The class contains several fields that store information about an order, including:**
 * averageFillPrice: The average fill price of the order.
 * clientId: A string representing the client ID.
@@ -27,7 +27,7 @@ several fields that store details about an order.**
 * type: An OrderType object representing the type of the order.
 * unfilled: An integer representing the number of unfilled orders
 
-### Constructors
+## Constructors
 **The class has several constructors, but they are deprecated, and it is recommended to use the Builder pattern instead.
 The constructors are of the form:**
 ```
@@ -37,7 +37,7 @@ public OrderInfo(String instrumentAlias,String orderId, boolean isBuy,OrderType 
                 isSimulated,boolean isDuplicate)
 ```
 
-### Using the Builder Pattern
+## Using the Builder Pattern
 **To use the Builder pattern to create an OrderInfo object, you would first create a Builder class within the OrderInfo
 class. This Builder class would have setter methods for each field in the OrderInfo class, and a build method to create
 an OrderInfo object. Here is an example of how you might implement and use this Builder class:**
