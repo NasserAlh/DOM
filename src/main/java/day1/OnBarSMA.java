@@ -7,34 +7,38 @@ import velox.api.layer1.layers.utils.OrderBook;
 import velox.api.layer1.messages.indicators.Layer1ApiUserMessageModifyIndicator.GraphType;
 import velox.api.layer1.simplified.*;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+
 import java.awt.*;
-
-/**
- * This class implements a simple moving average (SMA) trading strategy.
- */
-
 
 @Layer1TradingStrategy
 @Layer1SimpleAttachable
 @Layer1StrategyName("onBar SMA")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION2)
-public class OnBarSMA implements CustomModule, BarDataListener, OrdersListener  {
+public class OnBarSMA implements CustomModule, BarDataListener, OrdersListener {
+
+    private static final double INITIAL_PREVIOUS_CLOSE = -1.0;
+    private static final int SMA_PERIOD = 14;
+    private static final int STOP_LOSS_OFFSET = 10;
+    private static final int TAKE_PROFIT_OFFSET = 20;
 
     private Indicator closeIndicator;
     private Indicator smaIndicator;
     private double pips;
     private SMA sma;
-    private double previousClose = -1;
+    private double previousClose = INITIAL_PREVIOUS_CLOSE;
     private Double previousSMA = null;
     private Api api;
     private String alias;
     private int currentPosition = 0;
-    private static final int SMA_PERIOD = 14;
-    private static final int STOP_LOSS_OFFSET = 10;
-    private static final int TAKE_PROFIT_OFFSET = 20;
+
+    private static final String CSV_FILE_PATH = "C:\\Bookmap\\Logs\\Nasser_log.csv";
 
     @Override
     public void initialize(String alias, InstrumentInfo info, Api api, InitialState initialState) {
+        Log.info("Initializing the OnBarSMA strategy...");
 
         closeIndicator = api.registerIndicator("Close", GraphType.PRIMARY);
         closeIndicator.setColor(Color.MAGENTA);
@@ -45,63 +49,71 @@ public class OnBarSMA implements CustomModule, BarDataListener, OrdersListener  
         this.api = api;
         sma = new SMA(SMA_PERIOD);
 
+        // Initialize CSV file with headers
+        try (PrintWriter pw = new PrintWriter(new FileWriter(CSV_FILE_PATH))) {
+            pw.println("Log Type,Order ID,Is Buy,Status,Stop Price,Limit Price");
+        } catch (IOException e) {
+            Log.error("Error initializing CSV file", e);
+        }
+
+        Log.info("OnBarSMA strategy initialized successfully.");
     }
 
     @Override
     public void stop() {
+        Log.info("Stopping the OnBarSMA strategy...");
     }
 
     @Override
     public void onBar(OrderBook orderBook, Bar bar) {
-
         double closePrice = bar.getClose();
-        closeIndicator.addPoint(closePrice);
+        updateIndicators(closePrice);
+        checkForCrossoverSignals(closePrice);
+        updatePreviousValues(closePrice);
+    }
 
+    private void updateIndicators(double closePrice) {
+        closeIndicator.addPoint(closePrice);
         Double smaValue = sma.calculate(closePrice);
         if (smaValue != null) {
             smaIndicator.addPoint(smaValue);
-
-            // Check for crossover signals
-            if (previousClose != -1 && previousSMA != null) {
-                if (closePrice > smaValue && previousClose <= previousSMA) {
-                    Log.info("Buy Signal at " + closePrice * pips);
-                    if (currentPosition <= 0) {
-                        placeOrder(true, closePrice, 1); // Place a buy order
-                        currentPosition = 1; // Update the current position to long
-                    }
-                } else if (closePrice < smaValue && previousClose >= previousSMA) {
-                    Log.info("Sell Signal at " + closePrice * pips);
-                    if (currentPosition >= 0) {
-                        placeOrder(false, closePrice, 1); // Place a sell order
-                        currentPosition = -1; // Update the current position to short
-                    }
-                }
-            }
-
-            // Update previous values
-            previousClose = closePrice;
-            previousSMA = smaValue;
         }
     }
 
-    /**
-     * Places an order with the specified parameters.
-     *
-     * @param isBuy    whether the order is a buy order
-     * @param price    the price at which to place the order
-     * @param quantity the quantity of the order
-     */
+    private void checkForCrossoverSignals(double closePrice) {
+        Double smaValue = sma.calculate(closePrice);
+        if (smaValue != null && previousClose != INITIAL_PREVIOUS_CLOSE && previousSMA != null) {
+            if (closePrice > smaValue && previousClose <= previousSMA) {
+                Log.info("Buy Signal at " + closePrice * pips);
+                if (currentPosition <= 0) {
+                    placeOrder(true, closePrice, 1); // Place a buy order
+                    currentPosition = 1; // Update the current position to long
+                }
+            } else if (closePrice < smaValue && previousClose >= previousSMA) {
+                Log.info("Sell Signal at " + closePrice * pips);
+                if (currentPosition >= 0) {
+                    placeOrder(false, closePrice, 1); // Place a sell order
+                    currentPosition = -1; // Update the current position to short
+                }
+            }
+        }
+    }
+
+    private void updatePreviousValues(double closePrice) {
+        previousClose = closePrice;
+        previousSMA = sma.calculate(closePrice);
+    }
+
     private void placeOrder(boolean isBuy, double price, int quantity) {
         try {
             SimpleOrderSendParametersBuilder builder = new SimpleOrderSendParametersBuilder(alias, isBuy, quantity);
             builder.setDuration(OrderDuration.IOC);
-
             builder.setStopLossOffset(STOP_LOSS_OFFSET);
             builder.setTakeProfitOffset(TAKE_PROFIT_OFFSET);
             SimpleOrderSendParameters order = builder.build();
             api.sendOrder(order);
         } catch (Exception e) {
-            Log.error("Error placing order", e);
+            Log.info("Error placing order", e);
         }
     }
 
@@ -112,13 +124,20 @@ public class OnBarSMA implements CustomModule, BarDataListener, OrdersListener  
 
     @Override
     public void onOrderUpdated(OrderInfoUpdate orderInfoUpdate) {
-
+        try (PrintWriter pw = new PrintWriter(new FileWriter(CSV_FILE_PATH, true))) {
+            pw.println("Order Updated," + orderInfoUpdate.orderId + "," + orderInfoUpdate.isBuy + "," +
+                    orderInfoUpdate.status + "," + orderInfoUpdate.stopPrice + "," + orderInfoUpdate.limitPrice);
+        } catch (IOException e) {
+            Log.error("Error writing to CSV file", e);
+        }
     }
 
     @Override
     public void onOrderExecuted(ExecutionInfo executionInfo) {
-        // Logging the order ID
-        Log.info("The market order with OrderId: " + executionInfo.orderId + " has been executed.");
+        try (PrintWriter pw = new PrintWriter(new FileWriter(CSV_FILE_PATH, true))) {
+            pw.println("Order Executed," + executionInfo.orderId + ",,,,");
+        } catch (IOException e) {
+            Log.error("Error writing to CSV file", e);
+        }
     }
 }
-
