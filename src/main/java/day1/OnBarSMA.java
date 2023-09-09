@@ -2,21 +2,23 @@ package day1;
 
 import velox.api.layer1.annotations.*;
 import velox.api.layer1.common.Log;
-import velox.api.layer1.data.InstrumentInfo;
-import velox.api.layer1.data.OrderDuration;
-import velox.api.layer1.data.SimpleOrderSendParameters;
-import velox.api.layer1.data.SimpleOrderSendParametersBuilder;
+import velox.api.layer1.data.*;
 import velox.api.layer1.layers.utils.OrderBook;
 import velox.api.layer1.messages.indicators.Layer1ApiUserMessageModifyIndicator.GraphType;
 import velox.api.layer1.simplified.*;
 
 import java.awt.*;
 
+/**
+ * This class implements a simple moving average (SMA) trading strategy.
+ */
+
+
 @Layer1TradingStrategy
 @Layer1SimpleAttachable
 @Layer1StrategyName("onBar SMA")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION2)
-public class OnBarSMA implements CustomModule, BarDataListener {
+public class OnBarSMA implements CustomModule, BarDataListener, OrdersListener  {
 
     private Indicator closeIndicator;
     private Indicator smaIndicator;
@@ -27,6 +29,9 @@ public class OnBarSMA implements CustomModule, BarDataListener {
     private Api api;
     private String alias;
     private int currentPosition = 0;
+    private static final int SMA_PERIOD = 14;
+    private static final int STOP_LOSS_OFFSET = 10;
+    private static final int TAKE_PROFIT_OFFSET = 20;
 
     @Override
     public void initialize(String alias, InstrumentInfo info, Api api, InitialState initialState) {
@@ -38,7 +43,8 @@ public class OnBarSMA implements CustomModule, BarDataListener {
         pips = info.pips;
         this.alias = alias;
         this.api = api;
-        sma = new SMA(14);
+        sma = new SMA(SMA_PERIOD);
+
     }
 
     @Override
@@ -78,17 +84,20 @@ public class OnBarSMA implements CustomModule, BarDataListener {
         }
     }
 
+    /**
+     * Places an order with the specified parameters.
+     *
+     * @param isBuy    whether the order is a buy order
+     * @param price    the price at which to place the order
+     * @param quantity the quantity of the order
+     */
     private void placeOrder(boolean isBuy, double price, int quantity) {
         try {
             SimpleOrderSendParametersBuilder builder = new SimpleOrderSendParametersBuilder(alias, isBuy, quantity);
             builder.setDuration(OrderDuration.IOC);
 
-            // Setting a stop loss and take profit offset (in ticks)
-            int stopLossOffset = 10; // for example, 10 ticks
-            int takeProfitOffset = 20; // for example, 20 ticks
-
-            builder.setStopLossOffset(stopLossOffset);
-            builder.setTakeProfitOffset(takeProfitOffset);
+            builder.setStopLossOffset(STOP_LOSS_OFFSET);
+            builder.setTakeProfitOffset(TAKE_PROFIT_OFFSET);
             SimpleOrderSendParameters order = builder.build();
             api.sendOrder(order);
         } catch (Exception e) {
@@ -99,6 +108,17 @@ public class OnBarSMA implements CustomModule, BarDataListener {
     @Override
     public long getInterval() {
         return Intervals.INTERVAL_1_MINUTE;
+    }
+
+    @Override
+    public void onOrderUpdated(OrderInfoUpdate orderInfoUpdate) {
+
+    }
+
+    @Override
+    public void onOrderExecuted(ExecutionInfo executionInfo) {
+        // Logging the order ID
+        Log.info("The market order with OrderId: " + executionInfo.orderId + " has been executed.");
     }
 }
 
