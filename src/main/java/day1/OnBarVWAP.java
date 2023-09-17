@@ -18,19 +18,19 @@ import java.awt.*;
 
 @Layer1TradingStrategy
 @Layer1SimpleAttachable
-@Layer1StrategyName("onBar SMA ID")
+@Layer1StrategyName("onBar VWAP ID")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION2)
 
-public class OnBarSMA implements CustomModule, BarDataListener, OrdersListener {
+public class OnBarVWAP implements CustomModule, BarDataListener, OrdersListener {
 
     private static final double INITIAL_PREVIOUS_CLOSE = -1.0;
-    private static final int SMA_PERIOD = 14;
     private Indicator closeIndicator;
-    private Indicator smaIndicator;
+    private Indicator vwapIndicator;
     private double pips;
-    private SMA sma;
+    private double cumulativePriceVolume = 0.0;
+    private double cumulativeVolume = 0.0;
+    private double vwap = 0.0;
     private double previousClose = INITIAL_PREVIOUS_CLOSE;
-    private Double previousSMA = null;
     private Api api;
     private String alias;
     private int currentPosition = 0;
@@ -40,12 +40,12 @@ public class OnBarSMA implements CustomModule, BarDataListener, OrdersListener {
     public void initialize(String alias, InstrumentInfo info, Api api, InitialState initialState) {
         closeIndicator = api.registerIndicator("Close", GraphType.PRIMARY);
         closeIndicator.setColor(Color.MAGENTA);
-        smaIndicator = api.registerIndicator("SMA", GraphType.PRIMARY);
-        smaIndicator.setColor(Color.BLUE);
+        vwapIndicator = api.registerIndicator("SMA", GraphType.PRIMARY);
+        vwapIndicator.setColor(Color.BLUE);
         pips = info.pips;
         this.alias = alias;
         this.api = api;
-        sma = new SMA(SMA_PERIOD);
+
 
         try (PrintWriter pw = new PrintWriter(new FileWriter(EXECUTED_CSV_FILE_PATH))) {
             pw.println("Order ID,Price,Time,Execution ID");
@@ -70,6 +70,15 @@ public class OnBarSMA implements CustomModule, BarDataListener, OrdersListener {
     @Override
     public void onBar(OrderBook orderBook, Bar bar) {
         double closePrice = bar.getClose();
+        double volume = bar.getVolumeTotal();
+
+        cumulativePriceVolume += closePrice * volume;
+        cumulativeVolume += volume;
+
+        if (cumulativeVolume != 0) {
+            vwap = cumulativePriceVolume / cumulativeVolume;
+        }
+
         updateIndicators(closePrice);
         checkForCrossoverSignals(closePrice);
         updatePreviousValues(closePrice);
@@ -77,22 +86,18 @@ public class OnBarSMA implements CustomModule, BarDataListener, OrdersListener {
 
     private void updateIndicators(double closePrice) {
         closeIndicator.addPoint(closePrice);
-        Double smaValue = sma.calculate(closePrice);
-        if (smaValue != null) {
-            smaIndicator.addPoint(smaValue);
-        }
+        vwapIndicator.addPoint(vwap);
     }
 
     private void checkForCrossoverSignals(double closePrice) {
-        Double smaValue = sma.calculate(closePrice);
-        if (smaValue != null && previousClose != INITIAL_PREVIOUS_CLOSE && previousSMA != null) {
-            if (closePrice > smaValue && previousClose <= previousSMA) {
+        if (previousClose != INITIAL_PREVIOUS_CLOSE) {
+            if (closePrice > vwap && previousClose <= vwap) {
                 Log.info("Buy Signal at " + closePrice * pips);
                 if (currentPosition <= 0) {
                     placeOrder(true, closePrice, 1); // Place a buy order
                     currentPosition = 1; // Update the current position to long
                 }
-            } else if (closePrice < smaValue && previousClose >= previousSMA) {
+            } else if (closePrice < vwap && previousClose >= vwap) {
                 Log.info("Sell Signal at " + closePrice * pips);
                 if (currentPosition >= 0) {
                     placeOrder(false, closePrice, 1); // Place a sell order
@@ -104,7 +109,6 @@ public class OnBarSMA implements CustomModule, BarDataListener, OrdersListener {
 
     private void updatePreviousValues(double closePrice) {
         previousClose = closePrice;
-        previousSMA = sma.calculate(closePrice);
     }
 
     private void placeOrder(boolean isBuy, double price, int quantity) {
