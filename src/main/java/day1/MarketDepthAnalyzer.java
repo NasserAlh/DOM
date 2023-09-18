@@ -3,10 +3,7 @@ package day1;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.TimeZone;
-import java.util.TreeMap;
+import java.util.*;
 
 import velox.api.layer1.annotations.*;
 import velox.api.layer1.common.Log;
@@ -20,9 +17,13 @@ public class MarketDepthAnalyzer implements CustomModuleAdapter, DepthDataListen
 
     private final TreeMap<Integer, Integer> bids = new TreeMap<>(Comparator.reverseOrder());
     private final TreeMap<Integer, Integer> asks = new TreeMap<>();
+    private TreeMap<Integer, Integer> bidVolumeClusters = new TreeMap<>(Comparator.reverseOrder());
+    private TreeMap<Integer, Integer> askVolumeClusters = new TreeMap<>();
     private String formattedTimestamp;
     private static boolean isHeaderWritten = false;
     private final SimpleDateFormat dateFormat;
+    private static final int VOLUME_CLUSTER_THRESHOLD = 100; // You can change 100 to any value that suits your logic
+
 
     public MarketDepthAnalyzer() {
         dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
@@ -32,13 +33,15 @@ public class MarketDepthAnalyzer implements CustomModuleAdapter, DepthDataListen
     @Override
     public void initialize(String alias, InstrumentInfo info, Api api, InitialState initialState) {
         // Initialize the file with headers by calling demoBestPriceSize method
-        demoBestPriceSize(null);
+        writeBestPriceSizeToFile(null);
     }
 
     @Override
     public void onDepth(boolean isBid, int price, int size) {
         // Update the order book based on the new depth data received
         TreeMap<Integer, Integer> book = isBid ? bids : asks;
+        TreeMap<Integer, Integer> volumeClusters = isBid ? bidVolumeClusters : askVolumeClusters;
+
 
         if (size == 0) {
             book.remove(price);
@@ -46,16 +49,48 @@ public class MarketDepthAnalyzer implements CustomModuleAdapter, DepthDataListen
             book.put(price, size);
         }
 
+        volumeClusters.put(price, volumeClusters.getOrDefault(price, 0) + size);
+
+
         // Calculate the sum of top levels and log it
-        VolumePair topLevelsSum = demoSumOfPriceLevels(5); // For example, summing top 5 levels
+        VolumePair topLevelsSum = calculateTopLevelsVolume(5); // For example, summing top 5 levels
         int sumOfTopLevels = isBid ? topLevelsSum.bidVolume() : topLevelsSum.askVolume();
         Log.info("Sum of top " + (isBid ? "bid" : "ask") + " levels: " + sumOfTopLevels);
 
         // Update the best price size and calculate the OBI
-        demoBestPriceSize(topLevelsSum);
+        writeBestPriceSizeToFile(topLevelsSum);
+
+        // Identify and log volume clusters
+        identifyVolumeClusters(volumeClusters);
     }
 
-    private void demoBestPriceSize(VolumePair topLevelsSum) {
+    private void identifyVolumeClusters(TreeMap<Integer, Integer> volumeClusters) {
+        for (Map.Entry<Integer, Integer> entry : volumeClusters.entrySet()) {
+            if (entry.getValue() > VOLUME_CLUSTER_THRESHOLD) {
+                // This is a volume cluster
+                logVolumeCluster(entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+    private void logVolumeCluster(int price, int volume) {
+        try (FileWriter writer = new FileWriter("C:\\Bookmap\\Logs\\volumeClusters.csv", true)) {
+            if (!isHeaderWritten) {
+                writer.append("Timestamp,Price,Volume\n");
+                isHeaderWritten = true;
+            }
+            writer.append(String.valueOf(formattedTimestamp));
+            writer.append(',');
+            writer.append(String.valueOf(price));
+            writer.append(',');
+            writer.append(String.valueOf(volume));
+            writer.append('\n');
+        } catch (IOException e) {
+            Log.error("Error writing to CSV file: " + e.getMessage());
+        }
+    }
+
+    private void writeBestPriceSizeToFile(VolumePair topLevelsSum) {
         Integer bestBidPrice = bids.isEmpty() ? null : bids.firstKey();
         Integer bestAskPrice = asks.isEmpty() ? null : asks.firstKey();
         Integer bestBidSize = bids.isEmpty() ? null : bids.firstEntry().getValue();
@@ -101,7 +136,7 @@ public class MarketDepthAnalyzer implements CustomModuleAdapter, DepthDataListen
 
     public record VolumePair(int bidVolume, int askVolume){}
 
-    private VolumePair demoSumOfPriceLevels(int numLevelsToSum) {
+    private VolumePair calculateTopLevelsVolume(int numLevelsToSum) {
         // Calculate the sum of the top bid and ask levels and return a VolumePair object holding this data
         int sizeOfTopBidLevels = 0;
         int sizeOfTopAskLevels = 0;
