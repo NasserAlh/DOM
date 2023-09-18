@@ -1,11 +1,9 @@
 package day1;
 
-
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Comparator;
-
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.TreeMap;
@@ -18,68 +16,51 @@ import velox.api.layer1.simplified.*;
 @Layer1SimpleAttachable
 @Layer1StrategyName("onDepth Indicator")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION2)
-public class MarketDataListener implements CustomModuleAdapter, DepthDataListener, TimeListener  {
+public class MarketDepthAnalyzer implements CustomModuleAdapter, DepthDataListener, TimeListener  {
 
     private final TreeMap<Integer, Integer> bids = new TreeMap<>(Comparator.reverseOrder());
     private final TreeMap<Integer, Integer> asks = new TreeMap<>();
-    private long timestamp;
     private String formattedTimestamp;
     private static boolean isHeaderWritten = false;
-    private SimpleDateFormat dateFormat;
+    private final SimpleDateFormat dateFormat;
 
-    public MarketDataListener() {
+    public MarketDepthAnalyzer() {
         dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT-4")); // Set time zone to EDT (UTC-4)
     }
 
     @Override
     public void initialize(String alias, InstrumentInfo info, Api api, InitialState initialState) {
-
-        // Call the method here to create the file with headers
-        demoBestPriceSize();
+        // Initialize the file with headers by calling demoBestPriceSize method
+        demoBestPriceSize(null);
     }
 
     @Override
     public void onDepth(boolean isBid, int price, int size) {
-
-        //Depending on whether the update is a bid (isBid is true) or an ask (isBid is false), it selects the
-        // appropriate order book (bids or asks) to update.
+        // Update the order book based on the new depth data received
         TreeMap<Integer, Integer> book = isBid ? bids : asks;
 
-        //If the size of the update is 0, it removes the price level from the order book (indicating that there are no
-        // more orders at that price level). Otherwise, it updates the order book with the new size at the given price
-        // level.
         if (size == 0) {
             book.remove(price);
         } else {
             book.put(price, size);
         }
 
-        // Call demoSumOfPriceLevels to calculate the sum of the top levels
-        int sumOfTopLevels = demoSumOfPriceLevels(isBid, 5); // For example, summing top 5 levels
+        // Calculate the sum of top levels and log it
+        VolumePair topLevelsSum = demoSumOfPriceLevels(5); // For example, summing top 5 levels
+        int sumOfTopLevels = isBid ? topLevelsSum.bidVolume() : topLevelsSum.askVolume();
         Log.info("Sum of top " + (isBid ? "bid" : "ask") + " levels: " + sumOfTopLevels);
 
-        //After updating the order book, it calls the demoBestPriceSize method to record the current best bid and ask
-        // prices and sizes to a CSV file.
-        demoBestPriceSize();
+        // Update the best price size and calculate the OBI
+        demoBestPriceSize(topLevelsSum);
     }
-    private void demoBestPriceSize() {
 
-        // The first four lines inside the method are using the ternary operator to determine the best bid and ask
-        // prices and sizes. If the bids or asks TreeMaps are empty, it assigns null to the respective variables;
-        // otherwise, it retrieves the first key (best price) and value (size at the best price) from the TreeMap.
+    private void demoBestPriceSize(VolumePair topLevelsSum) {
         Integer bestBidPrice = bids.isEmpty() ? null : bids.firstKey();
         Integer bestAskPrice = asks.isEmpty() ? null : asks.firstKey();
         Integer bestBidSize = bids.isEmpty() ? null : bids.firstEntry().getValue();
         Integer bestAskSize = asks.isEmpty() ? null : asks.firstEntry().getValue();
 
-        // A FileWriter object is created to write data to a CSV file located at "C:\Bookmap\Logs\bestPriceSize.csv".
-        // The true parameter indicates that data will be appended to the file rather than overwriting it.
-        // It first checks if the header has been written to the file using the isHeaderWritten boolean variable.
-        // If not, it writes the header line to the file and sets isHeaderWritten to true to prevent the header from
-        // being written again. Next, it checks if both bestBidPrice and bestAskPrice are not null (indicating that
-        // there are valid bid and ask prices available). If so, it writes a new line to the file with the formatted
-        // timestamp, best bid price, best bid size, best ask price, and best ask size.
         try (FileWriter writer = new FileWriter("C:\\Bookmap\\Logs\\bestPriceSize.csv", true)) {
             if (!isHeaderWritten) {
                 writer.append("Timestamp,BestBidPrice,BestBidSize,BestAskPrice,BestAskSize\n");
@@ -100,26 +81,47 @@ public class MarketDataListener implements CustomModuleAdapter, DepthDataListene
         } catch (IOException e) {
             Log.error("Error writing to CSV file: " + e.getMessage());
         }
-    }
 
-    private int demoSumOfPriceLevels(boolean isBid, int numLevelsToSum) {
-        int sizeOfTopLevels = 0;
-        for (Integer size : (isBid ? bids : asks).values()) {
-            if (--numLevelsToSum < 0) {
-                break;
-            }
-            sizeOfTopLevels+= size;
-            //Log.info("Current size: " + size + ", Cumulative size: " + sizeOfTopLevels);
+        if (topLevelsSum != null) {
+            // Now use the passed topLevelsSum variable to calculate the OBI
+            int bidVolume = topLevelsSum.bidVolume();
+            int askVolume = topLevelsSum.askVolume();
+
+            double obi = (double)(bidVolume - askVolume) / (bidVolume + askVolume);
+            Log.info("Order Book Imbalance (OBI): " + obi);
         }
-        Log.info("Total size of top levels: " + sizeOfTopLevels);
-
-        return sizeOfTopLevels;
     }
 
     @Override
     public void onTimestamp(long nanoseconds) {
-        timestamp = nanoseconds;
+        // Update the timestamp and formatted timestamp based on the new timestamp received
         Date date = new Date(nanoseconds / 1000000); // Convert nanoseconds to milliseconds
         formattedTimestamp = dateFormat.format(date); // Format date to a readable string format
+    }
+
+    public record VolumePair(int bidVolume, int askVolume){}
+
+    private VolumePair demoSumOfPriceLevels(int numLevelsToSum) {
+        // Calculate the sum of the top bid and ask levels and return a VolumePair object holding this data
+        int sizeOfTopBidLevels = 0;
+        int sizeOfTopAskLevels = 0;
+
+        int bidLevelsCount = 0;
+        for (Integer size : bids.values()) {
+            if (bidLevelsCount++ >= numLevelsToSum) {
+                break;
+            }
+            sizeOfTopBidLevels += size;
+        }
+
+        int askLevelsCount = 0;
+        for (Integer size : asks.values()) {
+            if (askLevelsCount++ >= numLevelsToSum) {
+                break;
+            }
+            sizeOfTopAskLevels += size;
+        }
+
+        return new VolumePair(sizeOfTopBidLevels, sizeOfTopAskLevels);
     }
 }
