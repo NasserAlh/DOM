@@ -22,7 +22,7 @@ public class MarketDepthAnalyzer implements CustomModuleAdapter, DepthDataListen
     private String formattedTimestamp;
     private static boolean isHeaderWritten = false;
     private final SimpleDateFormat dateFormat;
-    private static final int VOLUME_CLUSTER_THRESHOLD = 100; // You can change 100 to any value that suits your logic
+    private static final int VOLUME_CLUSTER_THRESHOLD = 400; // You can change 100 to any value that suits your logic
     private static final int LIQUIDITY_THRESHOLD = 1000; // Adjust this value based on your strategy
     private static boolean isVolumeClusterHeaderWritten = false;
     private static boolean isLiquidityPoolHeaderWritten = false;
