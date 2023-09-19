@@ -23,6 +23,9 @@ public class MarketDepthAnalyzer implements CustomModuleAdapter, DepthDataListen
     private static boolean isHeaderWritten = false;
     private final SimpleDateFormat dateFormat;
     private static final int VOLUME_CLUSTER_THRESHOLD = 100; // You can change 100 to any value that suits your logic
+    private static final int LIQUIDITY_THRESHOLD = 1000; // Adjust this value based on your strategy
+    private static boolean isVolumeClusterHeaderWritten = false;
+    private static boolean isLiquidityPoolHeaderWritten = false;
 
 
     public MarketDepthAnalyzer() {
@@ -62,6 +65,40 @@ public class MarketDepthAnalyzer implements CustomModuleAdapter, DepthDataListen
 
         // Identify and log volume clusters
         identifyVolumeClusters(volumeClusters);
+
+        // Identify and log liquidity pools
+        identifyLiquidityPools(isBid ? bidVolumeClusters : askVolumeClusters, isBid);
+    }
+    private void identifyLiquidityPools(TreeMap<Integer, Integer> volumeClusters, boolean isBid) {
+        for (Map.Entry<Integer, Integer> entry : volumeClusters.entrySet()) {
+            int totalSizeAtPrice = getTotalSizeAtPrice(isBid, entry.getKey());
+            if (totalSizeAtPrice >= LIQUIDITY_THRESHOLD) {
+                logLiquidityPool(entry.getKey(), totalSizeAtPrice, isBid);
+            }
+        }
+    }
+
+    private void logLiquidityPool(int price, int totalSizeAtPrice, boolean isBid) {
+        try (FileWriter writer = new FileWriter("C:\\Bookmap\\Logs\\liquidityPools.csv", true)) {
+            if (!isLiquidityPoolHeaderWritten) {
+                writer.append("Timestamp,Side,Price,TotalSize\n");
+                isLiquidityPoolHeaderWritten = true;
+            }
+            writer.append(formattedTimestamp);
+            writer.append(',');
+            writer.append(isBid ? "Bid" : "Ask");
+            writer.append(',');
+            writer.append(String.valueOf(price));
+            writer.append(',');
+            writer.append(String.valueOf(totalSizeAtPrice));
+            writer.append('\n');
+        } catch (IOException e) {
+            Log.error("Error writing to CSV file: " + e.getMessage());
+        }
+    }
+
+    private int getTotalSizeAtPrice(boolean isBid, int price) {
+        return (isBid ? bidVolumeClusters : askVolumeClusters).getOrDefault(price, 0);
     }
 
     private void identifyVolumeClusters(TreeMap<Integer, Integer> volumeClusters) {
@@ -75,9 +112,9 @@ public class MarketDepthAnalyzer implements CustomModuleAdapter, DepthDataListen
 
     private void logVolumeCluster(int price, int volume) {
         try (FileWriter writer = new FileWriter("C:\\Bookmap\\Logs\\volumeClusters.csv", true)) {
-            if (!isHeaderWritten) {
+            if (!isVolumeClusterHeaderWritten) {
                 writer.append("Timestamp,Price,Volume\n");
-                isHeaderWritten = true;
+                isVolumeClusterHeaderWritten = true;
             }
             writer.append(String.valueOf(formattedTimestamp));
             writer.append(',');
