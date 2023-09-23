@@ -11,7 +11,7 @@ import velox.api.layer1.data.InstrumentInfo;
 import velox.api.layer1.simplified.*;
 
 @Layer1SimpleAttachable
-@Layer1StrategyName("DOM Creation")
+@Layer1StrategyName("DOM Creation 2")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION2)
 public class DOM implements CustomModuleAdapter, DepthDataListener, TimeListener {
 
@@ -48,34 +48,25 @@ public class DOM implements CustomModuleAdapter, DepthDataListener, TimeListener
     }
 
     private void writeDataToFile(TreeMap<Integer, Integer> bidData, TreeMap<Integer, Integer> askData) {
-        try (FileWriter writer = new FileWriter("C:\\Bookmap\\Logs\\MarketDepthData.csv", true)) {
+        try (FileWriter writer = new FileWriter("C:\\Bookmap\\Logs\\MarketDepthData1.csv", true)) {
             if (!isHeaderWritten) {
                 writer.append("Price,Bid Size,Ask Size\n");
                 isHeaderWritten = true;
             }
-
+    
             if (bidData != null && askData != null) {
-                for (Map.Entry<Integer, Integer> bidEntry : bidData.entrySet()) {
-                    int price = bidEntry.getKey();
-                    int bidSize = bidEntry.getValue();
+                TreeSet<Integer> allPrices = new TreeSet<>();
+                allPrices.addAll(bidData.keySet());
+                allPrices.addAll(askData.keySet());
+    
+                for (Integer price : allPrices.descendingSet()) {
+                    int bidSize = bidData.getOrDefault(price, 0);
                     int askSize = askData.getOrDefault(price, 0);
-
-                    writer.append(String.valueOf(price));
-                    writer.append(',');
-                    writer.append(String.valueOf(bidSize));
-                    writer.append(',');
-                    writer.append(String.valueOf(askSize));
-                    writer.append('\n');
-                }
-
-                for (Map.Entry<Integer, Integer> askEntry : askData.entrySet()) {
-                    int price = askEntry.getKey();
-                    if (!bidData.containsKey(price)) {
-                        int askSize = askEntry.getValue();
-
+    
+                    if (bidSize > 0 || askSize > 0) {
                         writer.append(String.valueOf(price));
                         writer.append(',');
-                        writer.append("0"); // No bid size at this price
+                        writer.append(String.valueOf(bidSize));
                         writer.append(',');
                         writer.append(String.valueOf(askSize));
                         writer.append('\n');
@@ -86,7 +77,7 @@ public class DOM implements CustomModuleAdapter, DepthDataListener, TimeListener
             Log.error("Error writing to CSV file: " + e.getMessage());
         }
     }
-
+    
     @Override
     public void onTimestamp(long nanoseconds) {
         // Update the timestamp and formatted timestamp based on the new timestamp received
