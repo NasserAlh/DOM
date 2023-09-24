@@ -45,6 +45,9 @@ public class DOM implements CustomModuleAdapter, DepthDataListener, TimeListener
 
         // Write the current state of the order book to the file
         writeDataToFile(bids, asks);
+
+        // Display the DOM
+        displayDOM();
     }
 
     private void writeDataToFile(TreeMap<Integer, Integer> bidData, TreeMap<Integer, Integer> askData) {
@@ -77,6 +80,22 @@ public class DOM implements CustomModuleAdapter, DepthDataListener, TimeListener
             Log.error("Error writing to CSV file: " + e.getMessage());
         }
     }
+
+    private void displayDOM() {
+        Log.info("Depth of Market (DOM)");
+        Log.info("---------------------");
+        Log.info("Price\tBid Size\tAsk Size");
+
+        TreeSet<Integer> allPrices = new TreeSet<>();
+        allPrices.addAll(bids.keySet());
+        allPrices.addAll(asks.keySet());
+
+        for (Integer price : allPrices.descendingSet()) {
+            int bidSize = bids.getOrDefault(price, 0);
+            int askSize = asks.getOrDefault(price, 0);
+            System.out.println(price + "\t" + bidSize + "\t" + askSize);
+        }
+    }
     
     @Override
     public void onTimestamp(long nanoseconds) {
@@ -85,4 +104,3 @@ public class DOM implements CustomModuleAdapter, DepthDataListener, TimeListener
         formattedTimestamp = dateFormat.format(date); // Format date to a readable string format
     }
 }
-
