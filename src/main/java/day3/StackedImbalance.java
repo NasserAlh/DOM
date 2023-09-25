@@ -16,11 +16,11 @@ import java.util.TreeMap;
 @Layer1SimpleAttachable
 @Layer1StrategyName("Stacked Imbalance")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION1)
-public class StackedImbalance implements CustomModuleAdapter, DepthDataListener, CustomSettingsPanelProvider {
+public class StackedImbalance implements CustomModuleAdapter, DepthDataListener,
+        CustomSettingsPanelProvider, IntervalListener {
 
     private final TreeMap<Integer, Integer> bids = new TreeMap<>(Comparator.reverseOrder());
     private final TreeMap<Integer, Integer> asks = new TreeMap<>();
-    private Api api;
     private velox.api.layer1.simplified.Indicator askBidIndicator;
     private velox.api.layer1.simplified.Indicator bidAskIndicator;
     private int imbalanceRatio = 300;
@@ -29,7 +29,6 @@ public class StackedImbalance implements CustomModuleAdapter, DepthDataListener,
 
     @Override
     public void initialize(String alias, InstrumentInfo info, Api api, InitialState initialState) {
-        this.api = api;
         askBidIndicator = api.registerIndicator("Ask/Bid Imbalance", GraphType.BOTTOM);
         bidAskIndicator = api.registerIndicator("Bid/Ask Imbalance", GraphType.BOTTOM);
 
@@ -114,6 +113,16 @@ public class StackedImbalance implements CustomModuleAdapter, DepthDataListener,
         stackPanel.add(stackSpinner);
 
         return new StrategyPanel[] { ratioPanel, volumePanel, stackPanel };
+    }
+
+    @Override
+    public long getInterval() {
+        return Intervals.INTERVAL_1_MINUTE;
+    }
+
+    @Override
+    public void onInterval() {
+
     }
 }
 

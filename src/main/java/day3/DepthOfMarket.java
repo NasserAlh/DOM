@@ -12,12 +12,13 @@ import velox.api.layer1.simplified.*;
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION2)
 
 
-public class DepthOfMarket implements CustomModuleAdapter, DepthDataListener {
+public class DepthOfMarket implements CustomModuleAdapter, DepthDataListener,
+        IntervalListener {
     private Map<Integer, Integer> bidLevels = new HashMap<>();
     private Map<Integer, Integer> askLevels = new HashMap<>();
     private long lastUpdateTime = 0;
-    private final long TIME_THRESHOLD = 5000; // 1 second
-    private final int SIZE_THRESHOLD = 2000; // Example size threshold
+    private final long TIME_THRESHOLD = 40000; // 1 second
+    private final int SIZE_THRESHOLD = 10000; // Example size threshold
 
     @Override
     public void onDepth(boolean isBid, int price, int size) {
@@ -47,6 +48,16 @@ public class DepthOfMarket implements CustomModuleAdapter, DepthDataListener {
         }
 
         lastUpdateTime = currentTime;
+    }
+
+    @Override
+    public long getInterval() {
+        return Intervals.INTERVAL_10_MINUTES;
+    }
+
+    @Override
+    public void onInterval() {
+
     }
 }
 

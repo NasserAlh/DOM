@@ -34,7 +34,7 @@ jar {
 task copyJar(type: Copy) {
     dependsOn jar  // Make sure this task runs after the jar is built
     from jar.archiveFile  // Source is the jar file
-    into '/mnt/c/Bookmap/addons/my_addons/'  // Destination directory
+    into 'C:\\Bookmap\\addons\\my_addons'  // Destination directory
 }
 
 // Make 'build' task depend on 'copyJar' so it will be executed when you run 'gradle build'
