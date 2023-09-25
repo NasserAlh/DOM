@@ -18,7 +18,7 @@ import velox.gui.StrategyPanel;
 public class TradingStrategyGUI implements CustomModule, CustomSettingsPanelProvider {
 
     private Api api;
-    
+
     @Override
     public void initialize(String alias, InstrumentInfo info, Api api, InitialState initialState) {
         this.api = api;
@@ -28,11 +28,24 @@ public class TradingStrategyGUI implements CustomModule, CustomSettingsPanelProv
     @Override
     public StrategyPanel[] getCustomSettingsPanels() {
         // Create your custom settings panels here
-        // Use JSpinners, JComboBoxes, etc., to allow users to adjust parameters
-        // ...
+
+        // Panel for adjusting risk level
+        StrategyPanel riskPanel = new StrategyPanel("Risk Level");
+        JSpinner riskSpinner = new JSpinner(new SpinnerNumberModel(1, 1, 10, 1));
+        riskPanel.add(riskSpinner);
+
+        // Panel for selecting trading strategy
+        StrategyPanel strategyPanel = new StrategyPanel("Select Strategy");
+        JComboBox<String> strategyBox = new JComboBox<>(new String[] {"Strategy1", "Strategy2", "Strategy3"});
+        strategyPanel.add(strategyBox);
+
+        // Panel for adjusting some threshold
+        StrategyPanel thresholdPanel = new StrategyPanel("Threshold");
+        JSlider thresholdSlider = new JSlider(0, 100, 50);
+        thresholdPanel.add(thresholdSlider);
 
         // Return an array of StrategyPanel objects
-        return new StrategyPanel[] { /* your panels */ };
+        return new StrategyPanel[] { riskPanel, strategyPanel, thresholdPanel };
     }
 
     public static StrategyPanel[] getCustomDisabledSettingsPanels() {
@@ -45,7 +58,7 @@ public class TradingStrategyGUI implements CustomModule, CustomSettingsPanelProv
 
     @Override
     public void stop() {
-        throw new UnsupportedOperationException("Unimplemented method 'stop'");
+        // Cleanup code here
     }
-    
+
 }
