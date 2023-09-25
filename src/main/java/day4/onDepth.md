@@ -15,8 +15,8 @@ analytics or trading algorithms based on the incoming market depth data?
 ### Key Takeaway
 
 If the given code is removed from the `onDepth` method, you'll lose the ability to maintain an accurate Order Book.
-This will severely limit or even disable your capacity to perform any subsequent analytics or trading algorithms based
-on the incoming market depth data.
+_**This will severely limit or even disable your capacity to perform any subsequent analytics or trading algorithms based
+on the incoming market depth data.**_
 
 ### Detailed Explanation
 
@@ -81,5 +81,16 @@ Below is a flowchart-like diagram that depicts the function of the given code sn
     - If `size` is not zero, the `price` and `size` are either added or updated in `book`.
 4. The function ends after performing one of these actions.
 
-I hope this diagram helps you visualize the flow and function of the code. Would you like to discuss any part of it in
-more detail?
+Here's a table that breaks down the function of the given code snippet:
+
+| Condition     | TreeMap Selected | Action Taken       | Description                                                                                     |
+|---------------|------------------|--------------------|-------------------------------------------------------------------------------------------------|
+| `isBid == true`  | `bids`           | `book = bids`      | If the incoming data is for a bid, the `bids` TreeMap is selected.                              |
+| `isBid == false` | `asks`           | `book = asks`      | If the incoming data is for an ask, the `asks` TreeMap is selected.                             |
+| `size == 0`      | `book`           | `book.remove(price)` | If the size is zero, the price level is removed from the selected TreeMap (`bids` or `asks`).   |
+| `size != 0`      | `book`           | `book.put(price, size)` | If the size is not zero, the price level and size are added or updated in the selected TreeMap. |
+
+### Key Takeaways:
+1. The TreeMap named book is dynamically set to either bids or asks based on whether the incoming data is a bid (isBid == true) or an ask (isBid == false).
+2. If the size of the incoming data is zero, the corresponding price level is removed from the selected TreeMap.
+3. If the size is not zero, the price and size are either added as a new entry or updated if the price already exists in the selected TreeMap.
