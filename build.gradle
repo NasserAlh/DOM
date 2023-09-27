@@ -15,7 +15,11 @@ dependencies {
             'com.bookmap.api:api-core:7.4.0.19',
             'com.bookmap.api:api-simplified:7.4.0.19',
             'org.apache.commons:commons-lang3:3.11',
-            'net.java.dev.jna:jna:5.13.0' // Add the JNA library dependency here
+            'net.java.dev.jna:jna:5.13.0', // Add the JNA library dependency here
+            'org.openjfx:javafx-base:17.0.1',
+            'org.openjfx:javafx-controls:17.0.1',
+            'org.openjfx:javafx-graphics:17.0.1',
+            'org.openjfx:javafx-fxml:17.0.1'
     ]
     if (findProperty('is_built_from_main_bookmap_project')) {
         implementation fileTree(dir: "${main_libs}", include: ['*.jar'])
@@ -39,3 +43,4 @@ task copyJar(type: Copy) {
 
 // Make 'build' task depend on 'copyJar' so it will be executed when you run 'gradle build'
 build.dependsOn copyJar
+
