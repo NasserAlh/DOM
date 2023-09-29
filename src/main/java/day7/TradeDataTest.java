@@ -14,7 +14,7 @@ import java.awt.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Layer1SimpleAttachable
-@Layer1StrategyName("Testing onTrade 11")
+@Layer1StrategyName("Testing onTrade package day7")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION1)
 public class TradeDataTest implements TradeDataListener, CustomModule {
 
