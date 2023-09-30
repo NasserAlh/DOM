@@ -24,7 +24,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Layer1SimpleAttachable
-@Layer1StrategyName("Nasser Dom Day9")
+@Layer1StrategyName("Dom POC")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION1)
 
 public class NasserDom implements CustomModule, DepthDataListener, TradeDataListener {
@@ -60,21 +60,26 @@ public class NasserDom implements CustomModule, DepthDataListener, TradeDataList
         updateDOM();
     }
 
-    public static class CustomTableCellRenderer extends DefaultTableCellRenderer {
-        public CustomTableCellRenderer() {
-            setHorizontalAlignment(SwingConstants.CENTER);  // Align columns in the middle
+    public class CustomTableCellRenderer extends DefaultTableCellRenderer {
+        private int pocPrice;
+
+        public void setPOCPrice(int pocPrice) {
+            this.pocPrice = pocPrice;
         }
+
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean
                 hasFocus, int row, int column) {
             Component cellComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
                     column);
 
-            if (column == 0) { // Bid column
-                cellComponent.setBackground(Color.decode("#5072A7"));  // Custom Blue
+            if (value != null && column == 1 && (Double) value == pocPrice * 0.25) {
+                cellComponent.setBackground(Color.YELLOW);  // Highlight POC
+            } else if (column == 0) {
+                cellComponent.setBackground(Color.decode("#5072A7"));
                 cellComponent.setForeground(Color.WHITE);
-            } else if (column == 2) { // Ask column
-                cellComponent.setBackground(Color.decode("#58111A"));  // Custom Blue
+            } else if (column == 2) {
+                cellComponent.setBackground(Color.decode("#58111A"));
                 cellComponent.setForeground(Color.WHITE);
             } else {
                 cellComponent.setBackground(table.getBackground());
@@ -199,6 +204,8 @@ public class NasserDom implements CustomModule, DepthDataListener, TradeDataList
     }
 
     private void refreshTableData() {
+        int pocPrice = findPOC();  // Find POC
+        ((CustomTableCellRenderer) table.getDefaultRenderer(Object.class)).setPOCPrice(pocPrice);  // Set POC for renderer
         int maxRows = Math.max(bids.size(), asks.size());
         Object[][] data = new Object[maxRows][4];  // Added a new column for VP
 
@@ -257,6 +264,19 @@ public class NasserDom implements CustomModule, DepthDataListener, TradeDataList
         return -1;  // Return -1 if the price is not found
     }
 
+    private int findPOC() {
+        int maxVolume = 0;
+        int pocPrice = 0;
+        for (Map.Entry<Integer, Integer> entry : volumeProfile.entrySet()) {
+            if (entry.getValue() > maxVolume) {
+                maxVolume = entry.getValue();
+                pocPrice = entry.getKey();
+            }
+        }
+        return pocPrice;
+    }
+
+
     @Override
     public void stop() {
         try {
@@ -268,7 +288,6 @@ public class NasserDom implements CustomModule, DepthDataListener, TradeDataList
             Log.info("Exception in stop: " + e.getMessage());
         }
     }
-
 
     private static class DepthData {
         boolean isBid;
