@@ -17,13 +17,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Layer1SimpleAttachable
-@Layer1StrategyName("Toggeled VP")
+@Layer1StrategyName("Immutable VP")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION1)
 public class OnTrade implements TradeDataListener, CustomModule {
 
-    private final ConcurrentSkipListMap<Double, Integer> volumeProfile = new ConcurrentSkipListMap<>();
+    private final AtomicReference<ConcurrentSkipListMap<Double, Integer>> volumeProfileRef = new AtomicReference<>(new ConcurrentSkipListMap<>());
     private double pointOfControl = 0.0;
 
     private VolumeProfilePanel volumeProfilePanel;
@@ -33,7 +34,7 @@ public class OnTrade implements TradeDataListener, CustomModule {
     public void initialize(String alias, InstrumentInfo info, Api api, InitialState initialState) {
         SwingUtilities.invokeLater(() -> {
             frame = new JFrame("Volume Profile");
-            volumeProfilePanel = new VolumeProfilePanel(volumeProfile);
+            volumeProfilePanel = new VolumeProfilePanel(volumeProfileRef.get());  // Pass the initial map to the panel
 
             // New code: Toggle buttons
             JCheckBox showPOC = new JCheckBox("Show POC", true); // Default is true
@@ -71,31 +72,39 @@ public class OnTrade implements TradeDataListener, CustomModule {
     }
 
     @Override
-    public void onTrade(double price, int size, TradeInfo tradeInfo) {
-        volumeProfile.merge(price, size, (a, b) -> a + b);
-
+    public synchronized void onTrade(double price, int size, TradeInfo tradeInfo) {
+        // Create a new map with existing data
+        ConcurrentSkipListMap<Double, Integer> newVolumeProfile = new ConcurrentSkipListMap<>(volumeProfileRef.get());
+        // Update the new map with the new trade data
+        newVolumeProfile.merge(price, size, Integer::sum);
+        // Atomically update the reference to the new map
+        volumeProfileRef.set(newVolumeProfile);
+    
         // Check for empty data
-        if (volumeProfile.isEmpty()) {
+        if (newVolumeProfile.isEmpty()) {
             Log.info("Volume Profile is empty.");
             return;
         }
-
+    
         // Calculate Value Area based on 70% of volume
-        ValueArea va = calculateValueArea(volumeProfile, 0.7);
-
-        pointOfControl = volumeProfile.entrySet().stream()
+        ValueArea va = calculateValueArea(newVolumeProfile, 0.7);
+    
+        // Determine the point of control
+        pointOfControl = newVolumeProfile.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
                 .orElse(pointOfControl);
-
+    
+        // Update the panel with the new point of control
         volumeProfilePanel.setPointOfControl(pointOfControl);
-
+    
+        // Update the panel with the new volume profile data and value area bounds
         SwingUtilities.invokeLater(() -> {
-            volumeProfilePanel.updateVolumeProfile(new ConcurrentSkipListMap<>(volumeProfile));
+            volumeProfilePanel.updateVolumeProfile(new ConcurrentSkipListMap<>(newVolumeProfile));
             volumeProfilePanel.setValueAreaBounds(va.lowerBound, va.upperBound);
         });
     }
-
+    
     private ValueArea calculateValueArea(ConcurrentSkipListMap<Double, Integer> volumeProfile, double threshold) {
         double totalVolume = volumeProfile.values().stream().mapToDouble(Integer::doubleValue).sum();
         double targetVolume = totalVolume * threshold;

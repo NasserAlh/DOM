@@ -125,7 +125,7 @@ public class VolumeProfilePanel extends JPanel {
     }
     
     public void updateVolumeProfile(ConcurrentSkipListMap<Double, Integer> newVolumeProfile) {
-        this.volumeProfile = newVolumeProfile;
+        this.volumeProfile = new ConcurrentSkipListMap<>(newVolumeProfile);
         setPreferredSize(new Dimension(400, (int)((BAR_HEIGHT + 10) * volumeProfile.size() * zoomFactor)));
         revalidate();
         repaint();
