@@ -69,8 +69,8 @@ public class VolumeProfilePanel extends JPanel {
         int xForBars = START_X + 20;
         int xForPrice = START_X;
         int y = (int)(START_Y * zoomFactor);
-
-        int maxVolume = volumeProfile.values().stream().max((a, b) -> a.compareTo(b)).orElse(1);
+    
+        int maxVolume = volumeProfile.values().stream().max(Integer::compare).orElse(1);
         int maxBarWidth = this.getWidth() - xForBars - PADDING;
     
         for (Double price : sortedPrices) {

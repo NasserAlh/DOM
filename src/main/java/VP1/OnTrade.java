@@ -71,7 +71,7 @@ public class OnTrade implements TradeDataListener, CustomModule {
     }
 
     @Override
-    public synchronized void onTrade(double price, int size, TradeInfo tradeInfo) {
+    public void onTrade(double price, int size, TradeInfo tradeInfo) {
         volumeProfile.merge(price, size, (a, b) -> a + b);
 
         // Check for empty data
