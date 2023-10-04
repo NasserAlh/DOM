@@ -69,7 +69,6 @@ public void initialize(String alias, InstrumentInfo info, Api api, InitialState 
     }
 }
 
-
     @Override
     public void stop() {
         if (frame != null) {
@@ -82,16 +81,16 @@ public void initialize(String alias, InstrumentInfo info, Api api, InitialState 
         // Create a new map with existing data
         ConcurrentSkipListMap<Double, Integer> newVolumeProfile = new ConcurrentSkipListMap<>(volumeProfileRef.get());
         // Update the new map with the new trade data
-        newVolumeProfile.merge(price, size, Integer::sum);
+        newVolumeProfile.merge(price, size, (oldValue, value) -> oldValue + value.intValue());
         // Atomically update the reference to the new map
         volumeProfileRef.set(newVolumeProfile);
-    
+
         // Check for empty data
         if (newVolumeProfile.isEmpty()) {
             Log.info("Volume Profile is empty.");
             return;
         }
-    
+
         // Calculate Value Area based on 70% of volume
         ValueArea va = calculateValueArea(newVolumeProfile, 0.7);
     
