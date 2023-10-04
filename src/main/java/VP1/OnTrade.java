@@ -12,7 +12,7 @@ import velox.api.layer1.simplified.TradeDataListener;
 import javax.swing.*;
 
 import java.awt.BorderLayout;
-
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +31,9 @@ public class OnTrade implements TradeDataListener, CustomModule {
     private JFrame frame;
 
     @Override
-    public void initialize(String alias, InstrumentInfo info, Api api, InitialState initialState) {
-        SwingUtilities.invokeLater(() -> {
+public void initialize(String alias, InstrumentInfo info, Api api, InitialState initialState) {
+    try {
+        SwingUtilities.invokeAndWait(() -> {
             frame = new JFrame("Volume Profile");
             volumeProfilePanel = new VolumeProfilePanel(volumeProfileRef.get());  // Pass the initial map to the panel
 
@@ -62,7 +63,12 @@ public class OnTrade implements TradeDataListener, CustomModule {
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             frame.setVisible(true);
         });
+    } catch (InterruptedException | InvocationTargetException e) {
+        // Handle exceptions, for example, log them
+        Log.error("Error initializing GUI", e);
     }
+}
+
 
     @Override
     public void stop() {
