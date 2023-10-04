@@ -1,4 +1,4 @@
-package volume.profile;
+package VP;
 
 import velox.api.layer1.annotations.*;
 import velox.api.layer1.data.TradeInfo;

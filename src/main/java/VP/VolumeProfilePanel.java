@@ -1,4 +1,4 @@
-package volume.profile;
+package VP;
 
 import javax.swing.*;
 import java.awt.*;
