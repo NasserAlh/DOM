@@ -11,13 +11,15 @@ import velox.api.layer1.simplified.TradeDataListener;
 
 import javax.swing.*;
 
+import java.awt.BorderLayout;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 @Layer1SimpleAttachable
-@Layer1StrategyName("VP with Yellow VA")
+@Layer1StrategyName("Toggeled VP")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION1)
 public class OnTrade implements TradeDataListener, CustomModule {
 
@@ -32,6 +34,22 @@ public class OnTrade implements TradeDataListener, CustomModule {
         SwingUtilities.invokeLater(() -> {
             frame = new JFrame("Volume Profile");
             volumeProfilePanel = new VolumeProfilePanel(volumeProfile);
+
+            // New code: Toggle buttons
+            JCheckBox showPOC = new JCheckBox("Show POC", true); // Default is true
+            showPOC.addActionListener(e -> {
+                volumeProfilePanel.setShowPOC(showPOC.isSelected());
+            });
+            JCheckBox showValueArea = new JCheckBox("Show Value Area", true); // Default is true
+            showValueArea.addActionListener(e -> {
+                volumeProfilePanel.setShowValueArea(showValueArea.isSelected());
+            });
+
+            JPanel optionsPanel = new JPanel();
+            optionsPanel.add(showPOC);
+            optionsPanel.add(showValueArea);
+
+            frame.add(optionsPanel, BorderLayout.NORTH);
 
             JScrollPane scrollPane = new JScrollPane(volumeProfilePanel);
             scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -53,8 +71,8 @@ public class OnTrade implements TradeDataListener, CustomModule {
     }
 
     @Override
-    public void onTrade(double price, int size, TradeInfo tradeInfo) {
-        volumeProfile.merge(price, size, Integer::sum);
+    public synchronized void onTrade(double price, int size, TradeInfo tradeInfo) {
+        volumeProfile.merge(price, size, (a, b) -> a + b);
 
         // Check for empty data
         if (volumeProfile.isEmpty()) {
