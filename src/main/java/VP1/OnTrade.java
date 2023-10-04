@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Layer1SimpleAttachable
-@Layer1StrategyName("Immutable VP")
+@Layer1StrategyName("NullPointerException VP")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION1)
 public class OnTrade implements TradeDataListener, CustomModule {
 
@@ -31,12 +31,11 @@ public class OnTrade implements TradeDataListener, CustomModule {
     private JFrame frame;
 
     @Override
-public void initialize(String alias, InstrumentInfo info, Api api, InitialState initialState) {
-    try {
-        SwingUtilities.invokeAndWait(() -> {
+    public void initialize(String alias, InstrumentInfo info, Api api, InitialState initialState) {
+        Runnable guiInitRunnable = () -> {
             frame = new JFrame("Volume Profile");
             volumeProfilePanel = new VolumeProfilePanel(volumeProfileRef.get());  // Pass the initial map to the panel
-
+    
             // New code: Toggle buttons
             JCheckBox showPOC = new JCheckBox("Show POC", true); // Default is true
             showPOC.addActionListener(e -> {
@@ -46,28 +45,36 @@ public void initialize(String alias, InstrumentInfo info, Api api, InitialState 
             showValueArea.addActionListener(e -> {
                 volumeProfilePanel.setShowValueArea(showValueArea.isSelected());
             });
-
+    
             JPanel optionsPanel = new JPanel();
             optionsPanel.add(showPOC);
             optionsPanel.add(showValueArea);
-
+    
             frame.add(optionsPanel, BorderLayout.NORTH);
-
+    
             JScrollPane scrollPane = new JScrollPane(volumeProfilePanel);
             scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
             scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-
+    
             frame.add(scrollPane);
-
+    
             frame.setSize(400, 400);
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             frame.setVisible(true);
-        });
-    } catch (InterruptedException | InvocationTargetException e) {
-        // Handle exceptions, for example, log them
-        Log.error("Error initializing GUI", e);
+        };
+    
+        if (SwingUtilities.isEventDispatchThread()) {
+            guiInitRunnable.run();
+        } else {
+            try {
+                SwingUtilities.invokeAndWait(guiInitRunnable);
+            } catch (InterruptedException | InvocationTargetException e) {
+                // Handle exceptions, for example, log them
+                Log.error("Error initializing GUI", e);
+            }
+        }
     }
-}
+    
 
     @Override
     public void stop() {
@@ -81,7 +88,7 @@ public void initialize(String alias, InstrumentInfo info, Api api, InitialState 
         // Create a new map with existing data
         ConcurrentSkipListMap<Double, Integer> newVolumeProfile = new ConcurrentSkipListMap<>(volumeProfileRef.get());
         // Update the new map with the new trade data
-        newVolumeProfile.merge(price, size, (oldValue, value) -> oldValue + value.intValue());
+        newVolumeProfile.merge(price, size, (a, b) -> a + b);
         // Atomically update the reference to the new map
         volumeProfileRef.set(newVolumeProfile);
 
