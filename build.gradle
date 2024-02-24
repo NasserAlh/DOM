@@ -3,8 +3,6 @@ import java.time.format.DateTimeFormatter
 
 plugins {
     id 'java-library'
-    id 'idea'
-    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.6'
 }
 
 repositories {
@@ -18,10 +16,18 @@ dependencies {
         implementation project(':Level1Api')
         implementation project(':SimplifiedApiWrapper')
     } else {
+<<<<<<< HEAD
         implementation  group: 'com.bookmap.api', name: 'api-core', version: '7.4.0.19'
         implementation  group: 'com.bookmap.api', name: 'api-simplified', version: '7.4.0.19'
         implementation  group: 'org.apache.commons', name: 'commons-lang3', version: '3.11'
         implementation  group: 'com.google.guava', name: 'guava', version: '32.1.2-jre'
+=======
+        implementation group: 'com.bookmap.api', name: 'api-core', version: '7.5.0.9'
+        implementation group: 'com.bookmap.api', name: 'api-simplified', version: '7.5.0.9'
+        implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.14.0'
+        implementation group: 'com.google.guava', name: 'guava', version: '32.1.2-jre'
+        implementation group: 'com.opencsv', name: 'opencsv', version: '5.8'
+>>>>>>> 9d7f0d6 (update build.gradle)
 
     }
 }
@@ -37,32 +43,3 @@ task copyJar(type: Copy) {
 }
 
 build.dependsOn copyJar
-idea.module.downloadJavadoc = true
-
-if (idea.project) {
-    idea.project.settings.runConfigurations {
-        def addOpensOptions = ([
-                'java.base/java.lang',
-                'java.base/java.io',
-                'java.base/java.math',
-                'java.base/java.util',
-                'java.base/java.util.concurrent',
-                'java.base/java.net',
-                'java.base/java.text',
-                'java.desktop/java.awt',
-                'java.desktop/java.awt.color',
-                'java.desktop/java.awt.peer',
-                'java.desktop/com.sun.java.swing',
-                'java.prefs/java.util.prefs'
-        ] as List).collect { "--add-opens=$it=ALL-UNNAMED" }.join(' ')
-        if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-            addOpensOptions += ' --add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED'
-        }
-
-        'BookmapJar'(org.jetbrains.gradle.ext.JarApplication) {
-            jarPath = 'C:\\Program Files\\Bookmap\\Bookmap.jar'
-            workingDirectory = 'C:\\Bookmap'
-            jvmArgs = addOpensOptions
-        }
-    }
-}
