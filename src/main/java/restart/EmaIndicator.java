@@ -1,17 +1,13 @@
 package restart;
 
-import velox.api.layer0.annotations.Layer1SimpleAttachable;
-import velox.api.layer0.annotations.Layer1StrategyName;
-import velox.api.layer0.annotations.Layer1ApiVersion;
-import velox.api.layer0.data.*;
-import velox.api.layer0.live.ExternalLiveBaseProvider;
-import velox.api.layer1.Layer1ApiVersionValue;
+import velox.api.layer1.annotations.*;
+import velox.api.layer1.annotations.Layer1Attachable;
 import velox.api.layer1.data.*;
-import velox.api.layer1.layers.utils.OrderBook;
+import velox.api.layer1.messages.indicators.Layer1ApiUserMessageModifyIndicator.GraphType;
 import velox.api.layer1.simplified.*;
 
-@Layer1SimpleAttachable
-@Layer1StrategyName("EMA Indicator")
+@Layer1Attachable
+@Layer1StrategyName("EMA Indicator Restart")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION2)
 public class EmaIndicator implements CustomModule, TradeDataListener, IntervalListener {
 
@@ -45,4 +41,7 @@ public class EmaIndicator implements CustomModule, TradeDataListener, IntervalLi
     public void onInterval() {
         indicator.addPoint(ema); // Update the indicator with the latest EMA value
     }
+
+    @Override
+    public void stop() {}
 }
