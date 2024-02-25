@@ -68,9 +68,8 @@ public class EmaBasedTradingStrategyERM implements CustomModule, BarDataListener
     @Override
     public void onPositionUpdate(StatusInfo statusInfo) {
         // Use the StatusInfo object to determine the current position size
-        inPosition = statusInfo. != 0;
+        inPosition = statusInfo.position != 0;
     }
-}
 
     @Override
     public long getInterval() {

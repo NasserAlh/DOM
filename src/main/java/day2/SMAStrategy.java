@@ -123,6 +123,7 @@ public class SMAStrategy implements CustomModule, BarDataListener, OrdersListene
     @Override
     public void onOrderUpdated(OrderInfoUpdate orderInfoUpdate) {
         orderUpdatedLogger.logOrderUpdated(orderInfoUpdate);
+        String orderId = orderInfoUpdate.getOrderId();
     }
 
     @Override
