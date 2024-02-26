@@ -9,7 +9,7 @@ import java.awt.*;
 
 @Layer1TradingStrategy
 @Layer1SimpleAttachable
-@Layer1StrategyName("EMA Based Trading Strategy")
+@Layer1StrategyName("EMA Based Trading Strategy ----- ")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION2)
 public class EmaBasedTradingStrategyERM implements CustomModule, BarDataListener, PositionListener {
     private static final int EMA_PERIOD = 200;

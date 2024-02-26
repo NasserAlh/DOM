@@ -13,12 +13,12 @@ import java.awt.*;
 
 @Layer1TradingStrategy
 @Layer1SimpleAttachable
-@Layer1StrategyName("TradesOverlapFixMoreEffi")
+@Layer1StrategyName("TradesOverlapFix initialState")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION2)
-public class TradesOverlapFixMoreEffi implements CustomModule, BarDataListener, OrdersListener {
+public class TradesOverlapFixInitialState implements CustomModule, BarDataListener, OrdersListener {
 
     private static final double INITIAL_PREVIOUS_CLOSE = -1.0;
-    private static final int SMA_PERIOD = 200;
+    private static final int SMA_PERIOD = 50;
     private static final int STOP_LOSS_OFFSET = 10;
     private static final int TAKE_PROFIT_OFFSET = 20;
 
@@ -31,6 +31,8 @@ public class TradesOverlapFixMoreEffi implements CustomModule, BarDataListener, 
     private Api api;
     private String alias;
     private int currentPosition = 0;
+    private InitialState initialState; // Class member to store the initial state
+
     
 
 
@@ -46,12 +48,14 @@ public class TradesOverlapFixMoreEffi implements CustomModule, BarDataListener, 
         this.alias = alias;
         this.api = api;
         sma = new SMA(SMA_PERIOD);
+
+        this.initialState = initialState; // Set the initial state
     }
 
     @Override
     public void stop() {
         Log.info("Stopping the OnBarSMA strategy...");
-        flattenPosition();
+        flattenPosition(initialState); // Use the stored initial state
     }
 
     @Override
@@ -104,14 +108,26 @@ public class TradesOverlapFixMoreEffi implements CustomModule, BarDataListener, 
         }
     }
 
-    private void flattenPosition() {
+    private void flattenPosition(InitialState initialState) {
         if (currentPosition != 0) {
-            boolean isBuy = currentPosition < 0; // If current position is negative, we need to buy to flatten
-            int quantity = Math.abs(currentPosition); // Quantity to flatten the position
-            placeOrder(isBuy, 0, quantity); // Price set to 0 to indicate market order
+            boolean isBuy = currentPosition < 0; // Determine the order side needed to flatten the position
+            double lastTradePrice = initialState.getLastTradePrice(); // Get the last trade price from InitialState
+    
+            // Create an order builder with the necessary parameters
+            SimpleOrderSendParametersBuilder builder = new SimpleOrderSendParametersBuilder(alias, isBuy, 1) // Always trading 1 contract
+                    .setDuration(OrderDuration.GTC) // Use 'Good Till Cancel' to ensure the order remains until filled
+                    .setLimitPrice(lastTradePrice); // Set limit price to last trade price for controlled execution
+    
+            // Build the order parameters
+            SimpleOrderSendParameters orderParameters = builder.build();
+    
+            // Send the order to flatten the position
+            api.sendOrder(orderParameters);
+    
             currentPosition = 0; // Reset the current position
         }
     }
+    
 
     @Override
     public void onOrderUpdated(OrderInfoUpdate orderInfoUpdate) {
