@@ -33,9 +33,6 @@ public class TradesOverlapFixInitialState implements CustomModule, BarDataListen
     private int currentPosition = 0;
     private InitialState initialState; // Class member to store the initial state
 
-    
-
-
     @Override
     public void initialize(String alias, InstrumentInfo info, Api api, InitialState initialState) {
         Log.info("Initializing the OnBarSMA strategy...");
