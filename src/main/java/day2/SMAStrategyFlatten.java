@@ -1,5 +1,6 @@
 package day2;
 
+
 import day1.SMA;
 import velox.api.layer1.annotations.*;
 import velox.api.layer1.common.Log;
@@ -16,9 +17,9 @@ import java.awt.*;
 
 @Layer1TradingStrategy
 @Layer1SimpleAttachable
-@Layer1StrategyName("SMA Strategy")
+@Layer1StrategyName("SMA Strategy flattenPosition")
 @Layer1ApiVersion(Layer1ApiVersionValue.VERSION2)
-public class SMAStrategy implements CustomModule, BarDataListener, OrdersListener {
+public class SMAStrategyFlatten implements CustomModule, BarDataListener, OrdersListener {
 
     private static final double INITIAL_PREVIOUS_CLOSE = -1.0;
     private static final int SMA_PERIOD = 14;
@@ -65,6 +66,7 @@ public class SMAStrategy implements CustomModule, BarDataListener, OrdersListene
     @Override
     public void stop() {
         Log.info("Stopping the OnBarSMA strategy...");
+        flattenPosition();
     }
 
     @Override
@@ -86,15 +88,14 @@ public class SMAStrategy implements CustomModule, BarDataListener, OrdersListene
     private void checkForCrossoverSignals(double closePrice) {
         Double smaValue = sma.calculate(closePrice);
         if (smaValue != null && previousClose != INITIAL_PREVIOUS_CLOSE && previousSMA != null) {
-            if (closePrice > smaValue && previousClose <= previousSMA) {
-                Log.info("Buy Signal at " + closePrice * pips);
-                if (currentPosition <= 0) {
+            // Check if there is no open position before placing a new order
+            if (currentPosition == 0) { 
+                if (closePrice > smaValue && previousClose <= previousSMA) {
+                    Log.info("Buy Signal at " + closePrice * pips);
                     placeOrder(true, closePrice, 1); // Place a buy order
                     currentPosition = 1; // Update the current position to long
-                }
-            } else if (closePrice < smaValue && previousClose >= previousSMA) {
-                Log.info("Sell Signal at " + closePrice * pips);
-                if (currentPosition >= 0) {
+                } else if (closePrice < smaValue && previousClose >= previousSMA) {
+                    Log.info("Sell Signal at " + closePrice * pips);
                     placeOrder(false, closePrice, 1); // Place a sell order
                     currentPosition = -1; // Update the current position to short
                 }
@@ -120,9 +121,25 @@ public class SMAStrategy implements CustomModule, BarDataListener, OrdersListene
         }
     }
 
+    private void flattenPosition() {
+        if (currentPosition != 0) {
+            boolean isBuy = currentPosition < 0; // If current position is negative, we need to buy to flatten
+            int quantity = Math.abs(currentPosition); // Quantity to flatten the position
+            placeOrder(isBuy, 0, quantity); // Price set to 0 to indicate market order
+            currentPosition = 0; // Reset the current position
+        }
+    }
+
     @Override
     public void onOrderUpdated(OrderInfoUpdate orderInfoUpdate) {
-        orderUpdatedLogger.logOrderUpdated(orderInfoUpdate);
+    orderUpdatedLogger.logOrderUpdated(orderInfoUpdate);
+    // Check if the order is fully filled
+    if (orderInfoUpdate.filled > 0 && orderInfoUpdate.unfilled == 0) {
+            // If the executed order was a buy, and we had a short position, or it was a sell and we had a long position
+            if ((currentPosition == -1 && orderInfoUpdate.isBuy) || (currentPosition == 1 && !orderInfoUpdate.isBuy)) {
+                currentPosition = 0; // Reset the current position indicating no open positions
+            }
+        }
     }
 
     @Override
@@ -132,8 +149,6 @@ public class SMAStrategy implements CustomModule, BarDataListener, OrdersListene
 
     @Override
     public long getInterval() {
-        return Intervals.INTERVAL_1_MINUTE;
+        return Intervals.INTERVAL_1_SECOND;
     }
-
-
 }
