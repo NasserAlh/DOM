@@ -1,0 +1,36 @@
+import velox.api.layer1.simplified.Api;
+import velox.api.layer1.simplified.InitialState;
+import velox.api.layer1.simplified.Intervals;
+import velox.api.layer1.simplified.Layer1ApiProvider;
+import velox.api.layer1.simplified.SimpleOrderSendParameters;
+import velox.api.layer1.simplified.SimpleOrderSendParametersBuilder;
+
+public class OrderPlacementUtility {
+
+    private Api api;
+    private String alias;
+
+    public OrderPlacementUtility(Api api, String alias) {
+        this.api = api;
+        this.alias = alias;
+    }
+
+    public void placeOrder(boolean isBuy, double price, int size, double stopLossOffset, double takeProfitOffset) {
+        SimpleOrderSendParameters orderParameters = new SimpleOrderSendParametersBuilder(alias, isBuy, size)
+            .setLimitPrice(price)
+            .setStopLossOffset(stopLossOffset)
+            .setTakeProfitOffset(takeProfitOffset)
+            .build();
+
+        api.sendOrder(orderParameters);
+    }
+    
+    // Example method for a market order
+    public void placeMarketOrder(boolean isBuy, int size) {
+        SimpleOrderSendParameters orderParameters = new SimpleOrderSendParametersBuilder(alias, isBuy, size)
+            .build();
+        api.sendOrder(orderParameters);
+    }
+
+    // Add more methods as needed for different types of orders
+}
