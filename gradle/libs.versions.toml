@@ -1,0 +1,26 @@
+# Version catalog for centralized dependency management
+# See: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
+
+[versions]
+# Bookmap API versions
+bookmap-api = "7.7.0.3"
+
+# Utility library versions
+commons-lang3 = "3.14.0"
+guava = "32.1.2-jre"
+opencsv = "5.8"
+
+[libraries]
+# Bookmap API dependencies
+bookmap-api-core = { group = "com.bookmap.api", name = "api-core", version.ref = "bookmap-api" }
+bookmap-api-simplified = { group = "com.bookmap.api", name = "api-simplified", version.ref = "bookmap-api" }
+
+# Utility libraries
+commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version.ref = "commons-lang3" }
+guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
+opencsv = { group = "com.opencsv", name = "opencsv", version.ref = "opencsv" }
+
+[bundles]
+# Bundle related dependencies together
+bookmap-apis = ["bookmap-api-core", "bookmap-api-simplified"]
+utility-libs = ["commons-lang3", "guava", "opencsv"]

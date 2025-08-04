@@ -1,38 +1,48 @@
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-
 plugins {
     id 'java-library'
 }
+
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+group = 'com.bookmap.addons'
+version = '1.0.0'
 
 repositories {
     mavenCentral()
     maven { url "https://maven.bookmap.com/maven2/releases/" }
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 dependencies {
+    // Bookmap API dependencies - conditional based on build environment
     if (findProperty('is_built_from_main_bookmap_project')) {
+        // When building from main Bookmap project - use local JARs and projects
         implementation fileTree(dir: "${main_libs}", include: ['*.jar'])
         implementation project(':Level1Api')
         implementation project(':SimplifiedApiWrapper')
     } else {
-        implementation group: 'com.bookmap.api', name: 'api-core', version: '7.5.0.9'
-        implementation group: 'com.bookmap.api', name: 'api-simplified', version: '7.5.0.9'
-        implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.14.0'
-        implementation group: 'com.google.guava', name: 'guava', version: '32.1.2-jre'
-        implementation group: 'com.opencsv', name: 'opencsv', version: '5.8'
+        // When building standalone - use published artifacts from version catalog
+        implementation libs.bundles.bookmap.apis
     }
-
+    
+    // Common utility libraries (always included) - using version catalog
+    implementation libs.bundles.utility.libs
 }
 
 jar {
-    archiveFileName = "Bookmap_Add_On_${LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_M_d_HH_mm"))}.jar"
+    archiveBaseName = 'bookmap-addon'
+    archiveVersion = version
 }
 
 task copyJar(type: Copy) {
     dependsOn jar
     from jar.archiveFile
-    into 'C:\\Bookmap\\addons\\my_addons'
+    into '/mnt/c/Bookmap/addons/my_addons/'
 }
 
 build.dependsOn copyJar
